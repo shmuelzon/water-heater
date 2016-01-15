@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
+#include <FS.h>
 #include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
 #include <InputDebounce.h>
@@ -170,6 +171,9 @@ void setup() {
   pixels.setBrightness(16);
   pixels.show();
 
+  /* SPIFFS */
+  SPIFFS.begin();
+
   /* Web Server */
   server.on("/relay", HTTP_GET, handleRelayGet);
   server.on("/relay", HTTP_PUT, handleRelayPut);
@@ -184,6 +188,7 @@ void setup() {
     server.on(route, HTTP_PUT, [i]() { handleLedPut(i); });
     server.on(route, HTTP_OPTIONS, handleOptions);
   }
+  server.serveStatic("/", SPIFFS, "/www/");
   server.onNotFound(handleNotFound);
 
   server.begin();
