@@ -84,6 +84,65 @@ static void handleRelayPut(void) {
   handleRelayGet();
 }
 
+static void fillLedJson(JsonObject &json, uint32_t id) {
+  String res;
+  char color[7];
+
+  sprintf(color, "%06x", pixels.getPixelColor(id - 1));
+  json["id"] = id;
+  json["color"] = String(color);
+}
+
+static void handleLedsGet(void) {
+  StaticJsonBuffer<256> jsonBuffer;
+  JsonArray &root = jsonBuffer.createArray();
+  String res;
+
+  for (int i = 1; i <= NUM_PIXELS; i++) {
+    JsonObject &json = root.createNestedObject();
+    fillLedJson(json, i);
+  }
+
+  root.printTo(res);
+  setResponseHeaders();
+  server.send(200, "application/json", res);
+}
+
+static void handleLedGet(uint32_t id) {
+  StaticJsonBuffer<128> jsonBuffer;
+  JsonObject &root = jsonBuffer.createObject();
+  String res;
+
+  fillLedJson(root, id);
+
+  root.printTo(res);
+  setResponseHeaders();
+  server.send(200, "application/json", res);
+}
+
+static void handleLedPut(uint32_t id) {
+  StaticJsonBuffer<256> jsonBuffer;
+  JsonObject &json_parsed = jsonBuffer.parseObject(server.arg("plain"));
+  uint32_t color;
+  char *tmp;
+
+  if (!json_parsed.success()) {
+    server.send(400, "plain/text", "Failed parsing JSON payload");
+    return;
+  }
+
+  color = strtoul(json_parsed["color"], &tmp, 16);
+  if (*tmp != '\0') {
+    server.send(400, "plain/text", "Invalid value for 'color'");
+    return;
+  }
+
+  pixels.setPixelColor(id - 1, color);
+  pixels.show();
+
+  handleLedGet(id);
+}
+
 void setup() {
   /* GPIOs */
   pinMode(RELAY_PIN, OUTPUT);
@@ -115,6 +174,16 @@ void setup() {
   server.on("/relay", HTTP_GET, handleRelayGet);
   server.on("/relay", HTTP_PUT, handleRelayPut);
   server.on("/relay", HTTP_OPTIONS, handleOptions);
+  server.on("/leds", HTTP_GET, handleLedsGet);
+  server.on("/leds", HTTP_OPTIONS, handleOptions);
+  for (int i = 1; i <= NUM_PIXELS; i++) {
+    char route[64];
+
+    sprintf(route, "/leds/%d", i);
+    server.on(route, HTTP_GET, [i]() { handleLedGet(i); });
+    server.on(route, HTTP_PUT, [i]() { handleLedPut(i); });
+    server.on(route, HTTP_OPTIONS, handleOptions);
+  }
   server.onNotFound(handleNotFound);
 
   server.begin();
