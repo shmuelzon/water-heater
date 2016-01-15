@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=175">
+    <meta name="apple-mobile-web-app-title" content="Water Heater">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <link rel="apple-touch-icon" sizes="120x120" href="images/touch-icon.png">
+    <script src="js/angular.js"></script>
+    <script src="js/angular-resource.js"></script>
+  </head>
+  <body>
+    <div ng-app="myApp" ng-controller="myCtrl">
+      Relay state: {{ relay.state }}
+      <span ng-switch on="relay.state">
+        <button ng-switch-when='on' ng-click='turnOff()'>Off</button>
+        <button ng-switch-when='off' ng-click='turnOn()'>On</button>
+      </span>
+    </div>
+
+    <script>
+      var app = angular.module('myApp', [ 'ngResource' ]);
+      app.controller('myCtrl', [ '$scope', '$resource', function($scope, $resource) {
+        var Relay = $resource('/relay', null,
+          {
+            'update': { method: 'PUT' }
+          });
+        (function tick() {
+          Relay.get(function(relay) { $scope.relay = relay; });
+          setTimeout(tick, 2000);
+        })();
+
+        $scope.turnOn = function () {
+            $scope.relay.state = 'on';
+            $scope.relay.$update();
+        }
+
+        $scope.turnOff = function () {
+            $scope.relay.state = 'off';
+            $scope.relay.$update();
+        }
+      }]);
+    </script>
+  </body>
+</html>
