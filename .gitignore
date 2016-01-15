@@ -1,0 +1,8 @@
+# Output
+.build
+.data
+spiffs.bin
+
+# Others
+*.swp
+*.swo
