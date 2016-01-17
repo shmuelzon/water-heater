@@ -1,0 +1,22 @@
+.led {
+  height: 96px;
+  width: 96px;
+  margin: 1px auto;
+}
+
+.relay-button {
+  margin: auto;
+  height: 96px;
+  width: 96px;
+  background-repeat: no-repeat;
+  background-image: url(../images/power.png);
+}
+
+.relay-button.off {
+  background-position: 0px 0px;
+}
+
+.relay-button.on {
+  background-position: -96px 0px;
+}
+
