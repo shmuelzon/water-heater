@@ -5,6 +5,8 @@
 #include <Adafruit_NeoPixel.h>
 #include <InputDebounce.h>
 #include <ArduinoJson.h>
+#include <NTPClient.h>
+#include <TimeLib.h>
 
 const char *ssid PROGMEM = ".......";
 const char *password PROGMEM = ".......";
@@ -19,6 +21,8 @@ const char *host PROGMEM = "water-heater";
 static ESP8266WebServer server(80);
 static Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 static InputDebounce button;
+static NTPClient ntp("europe.pool.ntp.org", 0, 60000);
+static time_t relayOnSince = 0;
 
 static bool getRelayState(void) {
   return digitalRead(RELAY_PIN) == HIGH;
@@ -28,6 +32,7 @@ static bool setRelayState(bool on) {
   uint32_t color = on ? 0xFF0000 : 0x000000;
 
   digitalWrite(RELAY_PIN, on ? HIGH : LOW);
+  relayOnSince = on ? ntp.getRawTime() : 0;
   for (int i = 0; i < NUM_PIXELS; i++)
     pixels.setPixelColor(i, color);
   pixels.show();
@@ -35,6 +40,15 @@ static bool setRelayState(bool on) {
 
 static void toggleRelay(void) {
   setRelayState(!getRelayState());
+}
+
+static char *time2iso(time_t t) {
+  static char buf[21];
+
+  snprintf(buf, 21, "%04d-%02d-%02dT%02d:%02d:%02dZ",
+    year(t), month(t), day(t), hour(t), minute(t), second(t));
+
+  return buf;
 }
 
 static void handleNotFound(void) {
@@ -58,6 +72,7 @@ static void handleRelayGet(void) {
   String res;
 
   root["state"] = getRelayState() ? "on" : "off";
+  root["on_since"] = relayOnSince ? time2iso(relayOnSince) : "";
 
   root.printTo(res);
   setResponseHeaders();
@@ -198,4 +213,5 @@ void loop() {
   ArduinoOTA.handle();
   button.process(millis());
   server.handleClient();
+  ntp.update();
 }

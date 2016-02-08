@@ -17,6 +17,7 @@
         <div class="led" style="background-color: #{{ led.color }};"></div>
       </div>
       <div class="relay-button {{ relay.state }}" ng-click="toggleRelay()"></div>
+      <div ng-show="relay.on_since !== ''">On for <span time-since="relay.on_since"></span></div>
     </div>
 
     <script>
@@ -50,6 +51,41 @@
           $scope.relay.state = $scope.relay.state == 'on' ? 'off' : 'on';
           $scope.relay.$update(function() { poller.restartAll(); });
         }
+      }])
+      .directive('timeSince', [ '$interval', function($interval) {
+        function link(scope, element, attrs) {
+          var time, timeoutId;
+
+          function updateTime() {
+            var diff = new Date(Date.now() - (new Date(time)).getTime());
+            var hh = diff.getUTCHours();
+            var mm = diff.getUTCMinutes();
+            var ss = diff.getUTCSeconds();
+
+            if (hh < 10) hh = '0' + hh;
+            if (mm < 10) mm = '0' + mm;
+            if (ss < 10) ss = '0' + ss;
+
+            element.text(hh + ':' + mm + ':' + ss);
+          }
+
+          scope.$watch(attrs.timeSince, function(value) {
+            time = value;
+            updateTime();
+          });
+
+          element.on('$destroy', function() {
+            $interval.cancel(timeoutId);
+          });
+
+          timeoutId = $interval(function() {
+            updateTime();
+          }, 1000);
+        }
+
+        return {
+          link: link,
+        };
       }]);
     </script>
   </body>
