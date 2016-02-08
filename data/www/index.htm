@@ -9,6 +9,7 @@
     <link rel="stylesheet" type="text/css" href="css/style.css">
     <script src="js/angular.js"></script>
     <script src="js/angular-resource.js"></script>
+    <script src="js/angular-poller.js"></script>
   </head>
   <body>
     <div ng-app="myApp" ng-controller="myCtrl">
@@ -19,8 +20,8 @@
     </div>
 
     <script>
-      var app = angular.module('myApp', [ 'ngResource' ]);
-      app.controller('myCtrl', [ '$scope', '$resource', function($scope, $resource) {
+      var app = angular.module('myApp', [ 'ngResource', 'emguo.poller' ]);
+      app.controller('myCtrl', [ '$scope', '$resource', 'poller', function($scope, $resource, poller) {
         /* Relay Control */
         var Relay = $resource('/relay', null,
           {
@@ -34,15 +35,20 @@
           });
 
         /* Poller */
-        (function tick() {
-          Relay.get(function(relay) { $scope.relay = relay; });
-          LEDs.get(function(leds) { $scope.leds = leds; });
-          setTimeout(tick, 2000);
-        })();
+        var pollingOptions = {
+          delay: 2000,
+          smart: true,
+        }
+        var pollerRelay = poller.get(Relay, pollingOptions);
+        var pollerLEDs = poller.get(LEDs, pollingOptions);
+
+        pollerRelay.promise.then(null, null, function(relay) { $scope.relay = relay; });
+        pollerLEDs.promise.then(null, null, function(leds) { $scope.leds = leds; });
 
         $scope.toggleRelay = function () {
+          poller.stopAll();
           $scope.relay.state = $scope.relay.state == 'on' ? 'off' : 'on';
-          $scope.relay.$update();
+          $scope.relay.$update(function() { poller.restartAll(); });
         }
       }]);
     </script>
