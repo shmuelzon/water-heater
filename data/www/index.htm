@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html manifest="manifest.appcache">
   <head>
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
     <meta name="apple-mobile-web-app-title" content="Water Heater">
@@ -99,6 +99,15 @@
           link: link,
         };
       }]);
+
+      /* Reload on updates */
+      if (window.applicationCache) {
+        applicationCache.addEventListener('updateready', function() {
+          if (confirm('An update is available. Reload now?')) {
+            window.location.reload(true);
+          }
+        });
+      }
     </script>
   </body>
 </html>

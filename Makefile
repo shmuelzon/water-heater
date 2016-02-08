@@ -13,6 +13,7 @@ $(foreach f,$(subst data/,,$(shell find data -type f)), \
   $(eval $(CDATA)/$f.gz: $(DATA)/$f) \
   $(eval DATA_FILES+=$(CDATA)/$f.gz) \
 )
+CACHE_FILE=$(CDATA)/www/manifest.appcache
 BUILD=.build
 SRC=water-heater.ino
 BIN=$(BUILD)/$(SRC).bin
@@ -33,11 +34,23 @@ $(BIN): $(BUILD) water-heater.ino
 	rm -rf $(BUILD)/*
 	$(ARDUINO) --verify --board esp8266:esp8266:generic:FlashSize=4M1M,FlashMode=dio,CpuFrequency=80 --pref build.path=$(BUILD) --verbose $(SRC)
 
+$(CACHE_FILE): $(DATA_FILES)
+	echo "CACHE MANIFEST" > $@
+	echo "" >> $@
+	echo "CACHE:" >> $@
+	(cd $(DATA)/www; find * -type f) >> $@
+	echo "" >> $@
+	echo "NETWORK:" >> $@
+	echo "*" >> $@
+	echo "" >> $@
+	HASH=`find $(DATA)/www -type f | xargs cat | md5`; \
+	  echo "# HASH: $$HASH" >> $@
+
 $(DATA_FILES):
 	@test ! -d $(dir $@) && mkdir -p $(dir $@) || true
 	gzip -ck $< > $@
 
-$(SPIFFS): $(DATA_FILES)
+$(SPIFFS): $(DATA_FILES) $(CACHE_FILE)
 	$(MKSPIFFS) -c $(CDATA) -p $(PAGE_SIZE) -b $(BLOCK_SIZE) -s $(IMAGE_SIZE) $@
 
 all: $(SPIFFS) $(BIN)
