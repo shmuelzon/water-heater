@@ -67,5 +67,10 @@ upload-spiffs: $(SPIFFS)
 	IP=`dig +short $(HOST) | head -n1`; \
 	  $(ESPOTA) -rsf $< -i $$IP -p $(PORT)
 
-.PHONY: all clean upload upload-spiffs
+install-deps:
+	$(ARDUINO) --install-boards esp8266:esp8266 || true
+	$(ARDUINO) --install-library \
+	  Adafruit\ NeoPixel,InputDebounce,ArduinoJson,NTPClient,Time
+
+.PHONY: all clean upload upload-spiffs install-deps
 .DEFAULT_GOAL=all
