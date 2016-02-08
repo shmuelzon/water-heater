@@ -7,21 +7,28 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <link rel="apple-touch-icon" sizes="120x120" href="images/touch-icon.png">
     <link rel="stylesheet" type="text/css" href="css/style.css">
+    <script src="js/spin.js"></script>
     <script src="js/angular.js"></script>
     <script src="js/angular-resource.js"></script>
     <script src="js/angular-poller.js"></script>
+    <script src="js/angular-spinner.js"></script>
   </head>
   <body>
     <div ng-app="myApp" ng-controller="myCtrl">
-      <div ng-repeat="led in leds">
-        <div class="led" style="background-color: #{{ led.color }};"></div>
+      <div ng-show="relay.$resolved && leds.$resolved">
+        <div ng-repeat="led in leds">
+          <div class="led" style="background-color: #{{ led.color }};"></div>
+        </div>
+        <div class="relay-button {{ relay.state }}" ng-click="toggleRelay()"></div>
+        <div ng-show="relay.on_since !== ''">On for <span time-since="relay.on_since"></span></div>
       </div>
-      <div class="relay-button {{ relay.state }}" ng-click="toggleRelay()"></div>
-      <div ng-show="relay.on_since !== ''">On for <span time-since="relay.on_since"></span></div>
+      <div ng-hide="relay.$resolved && leds.$resolved">
+        <span us-spinner="{ radius: 42, width: 14, length: 28 }"></span>
+      </div>
     </div>
 
     <script>
-      var app = angular.module('myApp', [ 'ngResource', 'emguo.poller' ]);
+      var app = angular.module('myApp', [ 'ngResource', 'emguo.poller', 'angularSpinner' ]);
       app.controller('myCtrl', [ '$scope', '$resource', 'poller', function($scope, $resource, poller) {
         /* Relay Control */
         var Relay = $resource('/relay', null,
