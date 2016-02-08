@@ -29,7 +29,7 @@
 
     <script>
       var app = angular.module('myApp', [ 'ngResource', 'emguo.poller', 'angularSpinner' ]);
-      app.controller('myCtrl', [ '$scope', '$resource', 'poller', function($scope, $resource, poller) {
+      app.controller('myCtrl', [ '$scope', '$document', '$resource', 'poller', function($scope, $document, $resource, poller) {
         /* Relay Control */
         var Relay = $resource('/relay', null,
           {
@@ -53,6 +53,11 @@
         pollerRelay.promise.then(null, null, function(relay) { $scope.relay = relay; });
         pollerLEDs.promise.then(null, null, function(leds) { $scope.leds = leds; });
 
+        /* Only start pollers after all code is loaded */
+        poller.stopAll();
+        $document.ready(function() { poller.restartAll(); });
+
+        /* Actions */
         $scope.toggleRelay = function () {
           poller.stopAll();
           $scope.relay.state = $scope.relay.state == 'on' ? 'off' : 'on';
