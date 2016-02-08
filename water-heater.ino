@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <FS.h>
+#include <WiFiManager.h>
 #include <ArduinoOTA.h>
 #include <Adafruit_NeoPixel.h>
 #include <InputDebounce.h>
@@ -8,8 +9,6 @@
 #include <NTPClient.h>
 #include <TimeLib.h>
 
-const char *ssid PROGMEM = ".......";
-const char *password PROGMEM = ".......";
 const char *host PROGMEM = "water-heater";
 
 #define RELAY_PIN 4
@@ -168,12 +167,9 @@ void setup() {
   pinMode(BUTTON_PIN, INPUT_PULLUP);
 
   /* WiFi */
-  WiFi.mode(WIFI_STA);
   WiFi.hostname(host);
-  WiFi.begin(ssid, password);
-  while (WiFi.waitForConnectResult() != WL_CONNECTED) {
-    delay(500);
-  }
+  WiFiManager wifiManager;
+  while (!wifiManager.autoConnect("Water-Heater Setup"));
 
   /* OTA */
   ArduinoOTA.setHostname(host);

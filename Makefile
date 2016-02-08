@@ -70,7 +70,7 @@ upload-spiffs: $(SPIFFS)
 install-deps:
 	$(ARDUINO) --install-boards esp8266:esp8266 || true
 	$(ARDUINO) --install-library \
-	  Adafruit\ NeoPixel,InputDebounce,ArduinoJson,NTPClient,Time
+	  Adafruit\ NeoPixel,InputDebounce,ArduinoJson,NTPClient,Time,WiFiManager
 
 .PHONY: all clean upload upload-spiffs install-deps
 .DEFAULT_GOAL=all
