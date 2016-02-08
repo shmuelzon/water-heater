@@ -18,6 +18,8 @@ const char *host PROGMEM = "water-heater";
 
 #define NUM_PIXELS 4
 
+#define RELAY_AUTO_OFF_PERIOD 7200 /* 2 hours */
+
 static ESP8266WebServer server(80);
 static Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 static InputDebounce button;
@@ -214,4 +216,7 @@ void loop() {
   button.process(millis());
   server.handleClient();
   ntp.update();
+  /* Turn relay off after RELAY_AUTO_OFF_PERIOD seconds */
+  if (relayOnSince > 0 && (ntp.getRawTime() - relayOnSince) > RELAY_AUTO_OFF_PERIOD)
+      setRelayState(false);
 }
